@@ -1,0 +1,10 @@
+raw_logs = ["ID01", "ID02", "ID01", "ID05", "ID02", "ID08", "ID01"]
+unique_users = set(raw_logs)
+print("all values: ")
+print(raw_logs)
+print("only unique values: ")
+print(unique_users)
+print("Is ID05 in unique users?", "ID05" in unique_users)
+print("Total entries in raw logs:", len(raw_logs))
+print("Total unique users:", len(unique_users))
+print("Unique User IDs:", unique_users)
