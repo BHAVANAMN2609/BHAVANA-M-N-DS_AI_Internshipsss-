@@ -1,36 +1,62 @@
+# ==========================================================
 # MINI PROJECT 1 – EXPLORATORY DATA ANALYSIS (EDA)
+# Dataset: Customer Analytics
+# ==========================================================
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 sns.set(style="whitegrid")
+
+# ==============================
 # PHASE 1 – DATASET INSPECTION
+# ==============================
+
 print("\n==============================")
 print("PHASE 1 – DATASET INSPECTION")
 print("==============================")
-df = pd.read_csv("titanic.csv")
+
+df = pd.read_csv("customer_analytics.csv")
+
 print("\nFirst 5 Rows:")
 print(df.head())
+
 print("\nDataset Information:")
 df.info()
+
 print("\nStatistical Summary:")
 print(df.describe())
+
+
+# ==============================
 # PHASE 2 – DATA CLEANING
 # ==============================
+
 print("\n==============================")
 print("PHASE 2 – DATA CLEANING")
 print("==============================")
+
 print("\nMissing Values Before Cleaning:")
 print(df.isnull().sum())
-# Drop Cabin column
-if 'Cabin' in df.columns:
-    df = df.drop(columns=['Cabin'])
-# Fill missing values properly (no inplace error)
-df['Age'] = df['Age'].fillna(df['Age'].median())
-df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode()[0])
+
+# Fill numeric columns with median
+numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+for col in numeric_cols:
+    df[col] = df[col].fillna(df[col].median())
+
+# Fill categorical columns with mode
+categorical_cols = df.select_dtypes(include=['object']).columns
+for col in categorical_cols:
+    df[col] = df[col].fillna(df[col].mode()[0])
+
 # Remove duplicates
 df = df.drop_duplicates()
+
 print("\nMissing Values After Cleaning:")
 print(df.isnull().sum())
+
+
 # ==============================
 # PHASE 3 – CLEAN VISUAL DASHBOARD
 # ==============================
@@ -42,56 +68,50 @@ print("==============================")
 fig = plt.figure(figsize=(22,12))
 plt.subplots_adjust(hspace=0.35, wspace=0.30)
 
-# 1️⃣ Age Distribution
-ax1 = plt.subplot(2,3,1)
-sns.histplot(df['Age'], kde=True)
-ax1.set_title("Age Distribution", fontsize=13)
-ax1.set_xlabel("Age")
-ax1.set_ylabel("Count")
+# Select first two numeric columns for visualization
+num_cols = df.select_dtypes(include=['int64', 'float64']).columns
 
-# 2️⃣ Passenger Class Distribution
-ax2 = plt.subplot(2,3,2)
-sns.countplot(x='Pclass', data=df)
-ax2.set_title("Passenger Class Distribution", fontsize=13)
-ax2.set_xlabel("Passenger Class")
-ax2.set_ylabel("Count")
+# 1️⃣ Distribution of first numeric column
+if len(num_cols) > 0:
+    ax1 = plt.subplot(2,3,1)
+    sns.histplot(df[num_cols[0]], kde=True)
+    ax1.set_title(f"{num_cols[0]} Distribution")
 
-# 3️⃣ Survival Count
-ax3 = plt.subplot(2,3,3)
-sns.countplot(x='Survived', data=df)
-ax3.set_title("Survival Count", fontsize=13)
-ax3.set_xlabel("Survived (0 = No, 1 = Yes)")
-ax3.set_ylabel("Count")
+# 2️⃣ Distribution of second numeric column
+if len(num_cols) > 1:
+    ax2 = plt.subplot(2,3,2)
+    sns.histplot(df[num_cols[1]], kde=True)
+    ax2.set_title(f"{num_cols[1]} Distribution")
 
-# 4️⃣ Survival by Gender
-ax4 = plt.subplot(2,3,4)
-sns.countplot(x='Sex', hue='Survived', data=df)
-ax4.set_title("Survival by Gender", fontsize=13)
-ax4.set_xlabel("Gender")
-ax4.set_ylabel("Count")
+# 3️⃣ Count plot of first categorical column
+cat_cols = df.select_dtypes(include=['object']).columns
+if len(cat_cols) > 0:
+    ax3 = plt.subplot(2,3,3)
+    sns.countplot(x=cat_cols[0], data=df)
+    ax3.set_title(f"{cat_cols[0]} Distribution")
+    plt.xticks(rotation=30)
 
-# 5️⃣ Age vs Survival
-ax5 = plt.subplot(2,3,5)
-sns.boxplot(x='Survived', y='Age', data=df)
-ax5.set_title("Age vs Survival", fontsize=13)
-ax5.set_xlabel("Survived")
-ax5.set_ylabel("Age")
+# 4️⃣ Boxplot between first categorical & first numeric
+if len(cat_cols) > 0 and len(num_cols) > 0:
+    ax4 = plt.subplot(2,3,4)
+    sns.boxplot(x=cat_cols[0], y=num_cols[0], data=df)
+    ax4.set_title(f"{num_cols[0]} vs {cat_cols[0]}")
+    plt.xticks(rotation=30)
+
+# 5️⃣ Scatter plot between first two numeric columns
+if len(num_cols) > 1:
+    ax5 = plt.subplot(2,3,5)
+    sns.scatterplot(x=num_cols[0], y=num_cols[1], data=df)
+    ax5.set_title(f"{num_cols[0]} vs {num_cols[1]}")
 
 # 6️⃣ Correlation Heatmap
 ax6 = plt.subplot(2,3,6)
 correlation = df.corr(numeric_only=True)
-sns.heatmap(
-    correlation,
-    annot=True,
-    fmt=".2f",
-    cmap="coolwarm",
-    square=True,
-    cbar=True
-)
-ax6.set_title("Correlation Matrix", fontsize=13)
+sns.heatmap(correlation, annot=True, fmt=".2f", cmap="coolwarm")
+ax6.set_title("Correlation Matrix")
 
 plt.suptitle(
-    "Titanic Dataset – Exploratory Data Analysis Dashboard",
+    "Customer Analytics – Exploratory Data Analysis Dashboard",
     fontsize=16,
     fontweight="bold"
 )
@@ -108,11 +128,11 @@ print("EXECUTIVE SUMMARY")
 print("==============================")
 
 print("""
-1. Most passengers were between 20–40 years old.
-2. Majority traveled in 3rd class.
-3. Females had significantly higher survival rates.
-4. First-class passengers had better survival chances.
-5. Passenger class and gender influenced survival more than age.
+1. Numeric variables show distribution patterns useful for customer segmentation.
+2. Categorical variables reveal group differences.
+3. Correlation analysis helps identify relationships between customer features.
+4. Data cleaning ensured no missing or duplicate records.
+5. EDA provides insights for business decision-making.
 """)
 
 print("EDA Project Completed Successfully.")
